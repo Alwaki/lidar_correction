@@ -68,7 +68,7 @@ void LidarCorrectionNode::node_thread()
                 p_in.point.z = cloud.points[i].z;
                 p_in.header.stamp = time;
                 p_in.header.frame_id = "livox_frame";
-                _tf_listener.waitForTransform("livox_frame", "world", time, ros::Duration(0.02));
+                _tf_listener.waitForTransform("livox_frame", "world", time, ros::Duration(0.5));
                 _tf_listener.transformPoint("world", p_in, p_out);
                 corrected_aggregated_cloud.points[oldsize + i].x = p_out.point.x;
                 corrected_aggregated_cloud.points[oldsize + i].y = p_out.point.y;
