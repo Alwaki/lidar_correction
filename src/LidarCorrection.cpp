@@ -8,6 +8,7 @@ LidarCorrectionNode::~LidarCorrectionNode() = default;
 
 void LidarCorrectionNode::_init_node()
 {
+    // Skip counter is used to delay start of lidar. Cloud counter is for aggregation of clouds.
     _skip_counter = 0;
     _cloud_counter = 0;
 
@@ -39,7 +40,7 @@ void LidarCorrectionNode::_init_node()
 
 void LidarCorrectionNode::node_thread()
 {
-    CloudXYZIT big_cloud;
+    CloudXYZIT corrected_aggregated_cloud;
     while(true)
     {
         if(!_cloud_buf.empty())
@@ -52,9 +53,9 @@ void LidarCorrectionNode::node_thread()
             _cloud_buf_mtx.unlock();
 
             // Create new cloud
-            size_t oldsize = big_cloud.points.size();
+            size_t oldsize = corrected_aggregated_cloud.points.size();
             size_t cloudsize = cloud.points.size();
-            big_cloud.points.resize(oldsize + cloudsize);
+            corrected_aggregated_cloud.points.resize(oldsize + cloudsize);
 
             // Fill new cloud with corrected points
             for (size_t i = 0; i < cloudsize; i++)
@@ -69,24 +70,24 @@ void LidarCorrectionNode::node_thread()
                 p_in.header.frame_id = "livox_frame";
                 _tf_listener.waitForTransform("livox_frame", "world", time, ros::Duration(0.02));
                 _tf_listener.transformPoint("world", p_in, p_out);
-                big_cloud.points[oldsize + i].x = p_out.point.x;
-                big_cloud.points[oldsize + i].y = p_out.point.y;
-                big_cloud.points[oldsize + i].z = p_out.point.z;
-                big_cloud.points[oldsize + i].t = cloud.points[i].t;
-                big_cloud.points[oldsize + i].intensity = cloud.points[i].intensity;
+                corrected_aggregated_cloud.points[oldsize + i].x = p_out.point.x;
+                corrected_aggregated_cloud.points[oldsize + i].y = p_out.point.y;
+                corrected_aggregated_cloud.points[oldsize + i].z = p_out.point.z;
+                corrected_aggregated_cloud.points[oldsize + i].t = cloud.points[i].t;
+                corrected_aggregated_cloud.points[oldsize + i].intensity = cloud.points[i].intensity;
             }
 
-            // Publish new cloud
+            // If enough clouds aggregated, publish corrected cloud
             _cloud_counter++;
             if(_cloud_counter > 5)
             {
                 _cloud_counter = 0;
                 sensor_msgs::PointCloud2 tempCloud;
-                pcl::toROSMsg(big_cloud, tempCloud);
+                pcl::toROSMsg(corrected_aggregated_cloud, tempCloud);
                 tempCloud.header.stamp = ros::Time(base_time);
                 tempCloud.header.frame_id = "world";
                 _cloud_correct_pub.publish(tempCloud);
-                big_cloud = {};
+                corrected_aggregated_cloud = {};
             }
             
         }
@@ -99,21 +100,21 @@ void LidarCorrectionNode::node_thread()
 
 void LidarCorrectionNode::_imu_callback(const sensor_msgs::Imu::ConstPtr &ImuMsg)
 {
-    // Set transform rotation of drone
+    // Set rotation transform of drone from IMU message
     geometry_msgs::TransformStamped transform;
     transform.transform.rotation.w = ImuMsg->orientation.w;
     transform.transform.rotation.x = ImuMsg->orientation.x;
     transform.transform.rotation.y = ImuMsg->orientation.y;
     transform.transform.rotation.z = ImuMsg->orientation.z;
 
-    // Set transform translation of drone
+    // Set translation transform of drone from latest known position
     _pos_mtx.lock();
     transform.transform.translation.x = _latest_position.point.x;
     transform.transform.translation.y = _latest_position.point.y;
     transform.transform.translation.z = _latest_position.point.z;
     _pos_mtx.unlock();
 
-    // Publish transform of drone
+    // Publish pose transform of drone
     transform.header.stamp = ImuMsg->header.stamp;
     transform.child_frame_id = "drone";
     transform.header.frame_id = "world";
@@ -122,8 +123,10 @@ void LidarCorrectionNode::_imu_callback(const sensor_msgs::Imu::ConstPtr &ImuMsg
 
 void LidarCorrectionNode::_pos_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg)
 {
+    // Zero position of drone by removing initial position
     static geometry_msgs::PointStamped first_point = *PosMsg;
 
+    // Make latest translational position of drone available
     geometry_msgs::PointStamped point;
     point.header = PosMsg->header;
     point.header.frame_id = "local";
@@ -139,27 +142,28 @@ void LidarCorrectionNode::_pos_callback(const geometry_msgs::PointStamped::Const
 
 void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::ConstPtr &msgIn)
 {
+    // Skip first few lidar clouds (to avoid problem when frames do not exist yet)
     _skip_counter++;
     if(_skip_counter>10)
     {
-    size_t cloudsize = msgIn->points.size();
-    CloudXYZIT cloud;
-    cloud.points.resize(cloudsize);
+        // Change cloud to PCL structure and push to queue
+        size_t cloudsize = msgIn->points.size();
+        CloudXYZIT cloud;
+        cloud.points.resize(cloudsize);
 
-    for (size_t i = 0; i < cloudsize; i++)
-        {
-            auto &src = msgIn->points[i];
-            auto &dst = cloud.points[i];
-            dst.x = src.x;
-            dst.y = src.y;
-            dst.z = src.z;
-            dst.intensity = src.reflectivity;
-            dst.t = src.offset_time;
-        }
-    // cloud_buf.front().first + cloud_buf.front().second->points.back().t/1.0e9;
-    _cloud_buf_mtx.lock();
-    _cloud_buf.push_back(std::make_pair(msgIn->header.stamp, cloud));
-    _cloud_buf_mtx.unlock();
+        for (size_t i = 0; i < cloudsize; i++)
+            {
+                auto &src = msgIn->points[i];
+                auto &dst = cloud.points[i];
+                dst.x = src.x;
+                dst.y = src.y;
+                dst.z = src.z;
+                dst.intensity = src.reflectivity;
+                dst.t = src.offset_time;
+            }
+        _cloud_buf_mtx.lock();
+        _cloud_buf.push_back(std::make_pair(msgIn->header.stamp, cloud));
+        _cloud_buf_mtx.unlock();
     }
 }
 
