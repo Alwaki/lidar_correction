@@ -17,6 +17,10 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "geometry_msgs/PointStamped.h"
@@ -44,6 +48,7 @@ typedef geometry_msgs::PointStamped         Pos3D;
 typedef sensor_msgs::Imu                    Rot3D;
 typedef pcl::PointCloud<PointXYZIT>         CloudXYZIT;
 typedef pcl::PointCloud<PointXYZIT>::Ptr    CloudXYZITPtr;
+typedef message_filters::sync_policies::ApproximateTime<livox_ros_driver::CustomMsg, sensor_msgs::Imu> MySyncPolicy;
 
 
 class LidarCorrectionNode
@@ -60,8 +65,10 @@ class LidarCorrectionNode
         ros::Subscriber                                 _cloud_sub;
         ros::Publisher                                  _cloud_correct_pub;
 
-        //tf2_ros::Buffer                                 _tf_buffer;
-        //tf2_ros::TransformListener                      _tf_listener(tf2_ros::Buffer _tf_buffer);
+        message_filters::Subscriber<livox_ros_driver::CustomMsg>    _livox_cloud_sub;
+        message_filters::Subscriber<sensor_msgs::Imu>               _livox_imu_sub;
+        message_filters::Synchronizer<MySyncPolicy>                 _livox_sync;
+
         tf::TransformListener                           _tf_listener;
         tf2_ros::TransformBroadcaster                   _dynamic_broadcaster;
         tf2_ros::StaticTransformBroadcaster             _static_broadcaster;
@@ -70,13 +77,16 @@ class LidarCorrectionNode
         std::mutex                                      _cloud_buf_mtx;
         Pos3D                                           _latest_position;
         std::mutex                                      _pos_mtx;
-        uint32_t                                        _skip_counter;
-        uint8_t                                         _cloud_counter;
+        geometry_msgs::Vector3                          _latest_angvel;
+        std::mutex                                      _imu_mtx;
+        int clouds_added;
+        int clouds_skipped;
 
         void _init_node();
         void _imu_callback(const sensor_msgs::Imu::ConstPtr &ImuMsg);
         void _pos_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg);
         void _cloud_callback(const livox_ros_driver::CustomMsg::ConstPtr &msgIn);
+        void _livox_callback(const livox_ros_driver::CustomMsg::ConstPtr &cloudIn, const sensor_msgs::Imu::ConstPtr &imuIn);
 };
 
 

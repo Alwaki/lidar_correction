@@ -1,7 +1,7 @@
 <launch>
 
       <!-- treeview Dataset -->
-      <arg  name="bag_file"  default="/home/alex/Downloads/fbag1_12_43.bag"/> <arg name="start_time" default="0"/>
+      <arg  name="bag_file"  default="/home/alex/Downloads/flight_bag_2_20mheight_2ms_mapping.bag"/> <arg name="start_time" default="0"/>
             
       <!-- Run the lidar correction node -->
       <node pkg="lidar_correction" type="lidar_correction_node" name="lidar_correction_node" respawn="false" output="screen" required="true"> </node>
