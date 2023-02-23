@@ -138,7 +138,7 @@ void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::Con
 void LidarCorrectionNode::_rtk_callback(const sensor_msgs::NavSatFix::ConstPtr &msgIn)
 {
     std::pair <double, double> planar_coordinates = convert(msgIn->latitude, msgIn->longitude);
-    ROS_INFO("Lat: %f, Lon: %f, x: %f, y: %f", msgIn->latitude, msgIn->longitude, planar_coordinates.first, 
+    ROS_INFO("Lat: %0.10f, Lon: %f, x: %f, y: %f", msgIn->latitude, msgIn->longitude, planar_coordinates.first, 
             planar_coordinates.second);
 }
 
