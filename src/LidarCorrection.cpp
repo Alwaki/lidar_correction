@@ -1,4 +1,5 @@
 #include "LidarCorrection.h"
+#include "GaussConformalProjection.h"
 
 LidarCorrectionNode::LidarCorrectionNode():
     _nh("~"),
@@ -12,8 +13,9 @@ void LidarCorrectionNode::_init_node()
 
     // Setup subscribers and publishers
     _cloud_sub         = _nh.subscribe<livox_ros_driver::CustomMsg>("/livox/lidar", 10, 
-                                                          &LidarCorrectionNode::_cloud_callback, 
-                                                          this, ros::TransportHints().tcpNoDelay(true));
+                        &LidarCorrectionNode::_cloud_callback, this, ros::TransportHints().tcpNoDelay(true));
+    _rtk_sub           = _nh.subscribe<sensor_msgs::NavSatFix>("/dji_osdk_ros/rtk_position", 10, 
+                        &LidarCorrectionNode::_rtk_callback, this, ros::TransportHints().tcpNoDelay(true));
     _cloud_correct_pub = _nh.advertise<sensor_msgs::PointCloud2>("/livox/lidar_corrected", 10);
 
     _dji_pos_sub.subscribe(_nh, "/dji_osdk_ros/local_position", 1);
@@ -44,7 +46,7 @@ void LidarCorrectionNode::node_thread()
 
             // Catch exception of no frames existing yet
             try
-            {
+            {   
                 // Fill new cloud with corrected points
                 for (size_t i = 0; i < cloudsize; i++)
                 {
@@ -97,7 +99,6 @@ void LidarCorrectionNode::_dji_callback(const geometry_msgs::PointStamped::Const
     // Zero position of drone by removing initial position
     static geometry_msgs::PointStamped first_point = *PosMsg;
 
-
     // Set translation transform of drone from POS message
     transform.transform.translation.x = PosMsg->point.x - first_point.point.x;
     transform.transform.translation.y = PosMsg->point.y - first_point.point.y;
@@ -132,6 +133,13 @@ void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::Con
     _cloud_buf_mtx.lock();
     _cloud_buf.push_back(std::make_pair(msgIn->header.stamp, cloud));
     _cloud_buf_mtx.unlock();
+}
+
+void LidarCorrectionNode::_rtk_callback(const sensor_msgs::NavSatFix::ConstPtr &msgIn)
+{
+    std::pair <double, double> planar_coordinates = convert(msgIn->latitude, msgIn->longitude);
+    ROS_INFO("Lat: %f, Lon: %f, x: %f, y: %f", msgIn->latitude, msgIn->longitude, planar_coordinates.first, 
+            planar_coordinates.second);
 }
 
 int main(int argc, char **argv)

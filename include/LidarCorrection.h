@@ -62,6 +62,7 @@ class LidarCorrectionNode
     private:
         ros::NodeHandle                                             _nh;
         ros::Subscriber                                             _cloud_sub;
+        ros::Subscriber                                             _rtk_sub;
         ros::Publisher                                              _cloud_correct_pub;
 
         message_filters::Subscriber<geometry_msgs::PointStamped>    _dji_pos_sub;
@@ -77,6 +78,7 @@ class LidarCorrectionNode
         void _init_node();
         void _dji_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg, const sensor_msgs::Imu::ConstPtr &ImuMsg);
         void _cloud_callback(const livox_ros_driver::CustomMsg::ConstPtr &msgIn);
+        void _rtk_callback(const sensor_msgs::NavSatFix::ConstPtr &msgIn);
 };
 
 
