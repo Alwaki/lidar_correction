@@ -56,7 +56,7 @@ void LidarCorrectionNode::node_thread()
                     p_in.point.z = cloud.points[i].z;
                     p_in.header.stamp = time;
                     p_in.header.frame_id = "livox_frame";
-                    _tf_listener.waitForTransform("livox_frame", "world", time, ros::Duration(0.2));
+                    _tf_listener.waitForTransform("livox_frame", "world", time, ros::Duration(0.001));
                     _tf_listener.transformPoint("world", p_in, p_out);
                     corrected_cloud.points[oldsize + i].x = p_out.point.x;
                     corrected_cloud.points[oldsize + i].y = p_out.point.y;
@@ -96,6 +96,7 @@ void LidarCorrectionNode::_dji_callback(const geometry_msgs::PointStamped::Const
 
     // Zero position of drone by removing initial position
     static geometry_msgs::PointStamped first_point = *PosMsg;
+
 
     // Set translation transform of drone from POS message
     transform.transform.translation.x = PosMsg->point.x - first_point.point.x;
