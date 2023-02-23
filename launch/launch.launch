@@ -6,22 +6,6 @@
       <!-- Setup static transform between lidar and drone -->      
       <node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_lidar2drone" args="0.2 0 -0.2 0.7071 0 -0.7071 0 base_link livox_frame" />
       <node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_imu2drone" args="0.0 0 0.0 0.0 0 0 1 base_link body_FLU" />
-      
-      
-      <node name="ekf_odom_local" type="ekf_localization_node" pkg="robot_localization" clear_params="true">
-            <rosparam file="$(find lidar_correction)/launch/local_ekf.yaml" command="load"/>
-            <remap from="/odometry/filtered" to="/odometry/filtered/local"/>
-      </node>
-      <node name="ekf_odom_global" type="ekf_localization_node" pkg="robot_localization" clear_params="true">
-            <rosparam file="$(find lidar_correction)/launch/global_ekf.yaml" command="load"/>
-            <remap from="/odometry/filtered" to="/odometry/filtered/global"/>
-      </node>
-      <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" respawn="true">
-            <rosparam file="$(find lidar_correction)/launch/navsat.yaml" command="load"/>
-            <remap from="/imu/data" to="/dji_osdk_ros/imu" />
-            <remap from="/odometry/filtered" to="/odometry/filtered/global"/>
-            <remap from="/gps/fix" to="/dji_osdk_ros/rtk_position" />
-      </node>
 
       <!-- Run the lidar correction node -->
       <node pkg="lidar_correction" type="lidar_correction_node" name="lidar_correction_node" respawn="false" output="screen" required="true"> </node>

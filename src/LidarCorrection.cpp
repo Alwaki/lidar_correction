@@ -87,7 +87,6 @@ void LidarCorrectionNode::node_thread()
 
 void LidarCorrectionNode::_dji_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg, const sensor_msgs::Imu::ConstPtr &ImuMsg)
 {
-    /*
     // Set rotation transform of drone from IMU message
     geometry_msgs::TransformStamped transform;
     transform.transform.rotation.w = ImuMsg->orientation.w;
@@ -110,7 +109,6 @@ void LidarCorrectionNode::_dji_callback(const geometry_msgs::PointStamped::Const
     transform.child_frame_id = "base_link";
     transform.header.frame_id = "world";
     _dynamic_broadcaster.sendTransform(transform);
-    */
 }
 
 void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::ConstPtr &msgIn)
