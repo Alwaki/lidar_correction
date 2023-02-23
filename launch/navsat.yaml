@@ -1,0 +1,7 @@
+magnetic_declination_radians: 0
+yaw_offset: 1.570796327
+broadcast_cartesian_transform: true
+publish_filtered_gps: false
+broadcast_utm_transform: false
+use_odometry_yaw: false
+wait_for_datum: false

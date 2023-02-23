@@ -48,7 +48,7 @@ typedef geometry_msgs::PointStamped         Pos3D;
 typedef sensor_msgs::Imu                    Rot3D;
 typedef pcl::PointCloud<PointXYZIT>         CloudXYZIT;
 typedef pcl::PointCloud<PointXYZIT>::Ptr    CloudXYZITPtr;
-typedef message_filters::sync_policies::ApproximateTime<livox_ros_driver::CustomMsg, sensor_msgs::Imu> MySyncPolicy;
+typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PointStamped, sensor_msgs::Imu> MySyncPolicy;
 
 
 class LidarCorrectionNode
@@ -59,34 +59,23 @@ class LidarCorrectionNode
        void node_thread();
 
     private:
-        ros::NodeHandle                                 _nh;
-        ros::Subscriber                                 _dji_imu_sub;
-        ros::Subscriber                                 _dji_pos_sub;
-        ros::Subscriber                                 _cloud_sub;
-        ros::Publisher                                  _cloud_correct_pub;
+        ros::NodeHandle                                             _nh;
+        ros::Subscriber                                             _cloud_sub;
+        ros::Publisher                                              _cloud_correct_pub;
 
-        message_filters::Subscriber<livox_ros_driver::CustomMsg>    _livox_cloud_sub;
-        message_filters::Subscriber<sensor_msgs::Imu>               _livox_imu_sub;
-        message_filters::Synchronizer<MySyncPolicy>                 _livox_sync;
+        message_filters::Subscriber<geometry_msgs::PointStamped>    _dji_pos_sub;
+        message_filters::Subscriber<sensor_msgs::Imu>               _dji_imu_sub;
+        message_filters::Synchronizer<MySyncPolicy>                 _dji_sync;
 
-        tf::TransformListener                           _tf_listener;
-        tf2_ros::TransformBroadcaster                   _dynamic_broadcaster;
-        tf2_ros::StaticTransformBroadcaster             _static_broadcaster;
+        tf::TransformListener                                       _tf_listener;
+        tf2_ros::TransformBroadcaster                               _dynamic_broadcaster;
 
-        std::deque<std::pair<ros::Time, CloudXYZIT>>    _cloud_buf;
-        std::mutex                                      _cloud_buf_mtx;
-        Pos3D                                           _latest_position;
-        std::mutex                                      _pos_mtx;
-        geometry_msgs::Vector3                          _latest_angvel;
-        std::mutex                                      _imu_mtx;
-        int clouds_added;
-        int clouds_skipped;
+        std::deque<std::pair<ros::Time, CloudXYZIT>>                _cloud_buf;
+        std::mutex                                                  _cloud_buf_mtx;
 
         void _init_node();
-        void _imu_callback(const sensor_msgs::Imu::ConstPtr &ImuMsg);
-        void _pos_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg);
+        void _dji_callback(const geometry_msgs::PointStamped::ConstPtr &PosMsg, const sensor_msgs::Imu::ConstPtr &ImuMsg);
         void _cloud_callback(const livox_ros_driver::CustomMsg::ConstPtr &msgIn);
-        void _livox_callback(const livox_ros_driver::CustomMsg::ConstPtr &cloudIn, const sensor_msgs::Imu::ConstPtr &imuIn);
 };
 
 
