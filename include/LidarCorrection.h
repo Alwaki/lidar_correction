@@ -27,22 +27,23 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TransformStamped.h"
 #include "livox_ros_driver/CustomMsg.h"
+#include "sensor_msgs/NavSatFix.h"
 
 #include <deque>
 #include <thread>
 #include <string>
 #include <stdio.h>
 
-struct PointXYZIT
+struct EIGEN_ALIGN16 PointXYZIT
 {
     PCL_ADD_POINT4D;
     PCL_ADD_INTENSITY;
-    uint32_t t;
+    std::uint32_t t;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIT,
                                  (float, x, x) (float, y, y) (float, z, z)
-                                 (float, intensity, intensity) (uint32_t, t, t))
+                                 (float, intensity, intensity) (std::uint32_t, t, t))
 
 typedef geometry_msgs::PointStamped         Pos3D;
 typedef sensor_msgs::Imu                    Rot3D;
