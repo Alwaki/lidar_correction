@@ -39,7 +39,7 @@ void LidarCorrectionNode::node_thread()
             _cloud_buf_mtx.unlock();
 
             // Create new cloud
-            CloudXYZIT corrected_cloud;
+            CloudXYZITT corrected_cloud;
             size_t oldsize = corrected_cloud.points.size();
             size_t cloudsize = cloud.points.size();
             corrected_cloud.points.resize(oldsize + cloudsize);
@@ -50,7 +50,7 @@ void LidarCorrectionNode::node_thread()
                 // Fill new cloud with corrected points
                 for (size_t i = 0; i < cloudsize; i++)
                 {
-                    ros::Duration time_offset(cloud.points[i].t*1.0e-9);
+                    ros::Duration time_offset(cloud.points[i].time*1.0e-9);
                     auto time = base_time + time_offset;
                     geometry_msgs::PointStamped p_in, p_out;
                     p_in.point.x = cloud.points[i].x;
@@ -63,7 +63,8 @@ void LidarCorrectionNode::node_thread()
                     corrected_cloud.points[oldsize + i].x = p_out.point.x;
                     corrected_cloud.points[oldsize + i].y = p_out.point.y;
                     corrected_cloud.points[oldsize + i].z = p_out.point.z;
-                    corrected_cloud.points[oldsize + i].t = cloud.points[i].t;
+                    corrected_cloud.points[oldsize + i].time = cloud.points[i].time;
+                    corrected_cloud.points[oldsize + i].tag = cloud.points[i].tag;
                     corrected_cloud.points[oldsize + i].intensity = cloud.points[i].intensity; /// (0.04*pow((p_out.point.z-10), 2)+1);
                 }
 
@@ -117,7 +118,7 @@ void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::Con
 {
     // Change cloud to PCL structure and push to queue
     size_t cloudsize = msgIn->points.size();
-    CloudXYZIT cloud;
+    CloudXYZITT cloud;
     cloud.points.resize(cloudsize);
 
     for (size_t i = 0; i < cloudsize; i++)
@@ -128,7 +129,8 @@ void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::Con
             dst.y = src.y;
             dst.z = src.z;
             dst.intensity = src.reflectivity;
-            dst.t = src.offset_time;
+            dst.time = src.offset_time;
+            dst.tag = src.tag;
         }
     _cloud_buf_mtx.lock();
     _cloud_buf.push_back(std::make_pair(msgIn->header.stamp, cloud));
