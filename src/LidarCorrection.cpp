@@ -39,7 +39,7 @@ void LidarCorrectionNode::node_thread()
             _cloud_buf_mtx.unlock();
 
             // Create new cloud
-            CloudXYZITT corrected_cloud;
+            CloudXYZITTH corrected_cloud;
             size_t oldsize = corrected_cloud.points.size();
             size_t cloudsize = cloud.points.size();
             corrected_cloud.points.resize(oldsize + cloudsize);
@@ -118,7 +118,7 @@ void LidarCorrectionNode::_cloud_callback(const livox_ros_driver::CustomMsg::Con
 {
     // Change cloud to PCL structure and push to queue
     size_t cloudsize = msgIn->points.size();
-    CloudXYZITT cloud;
+    CloudXYZITTH cloud;
     cloud.points.resize(cloudsize);
 
     for (size_t i = 0; i < cloudsize; i++)

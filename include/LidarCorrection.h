@@ -34,24 +34,27 @@
 #include <string>
 #include <stdio.h>
 
-struct EIGEN_ALIGN16 PointXYZITT
+struct EIGEN_ALIGN16 PointXYZITTH
 {
     PCL_ADD_POINT4D;
     PCL_ADD_INTENSITY;
     std::uint32_t time;
     std::uint32_t tag;
+    float height;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZITT,
+};
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZITTH,
                                  (float, x, x) (float, y, y) (float, z, z)
                                  (float, intensity, intensity) 
                                  (std::uint32_t, time, time)
-                                 (std::uint32_t, tag, tag))
+                                 (std::uint32_t, tag, tag)
+                                 (float, height, height))
 
 typedef geometry_msgs::PointStamped         Pos3D;
 typedef sensor_msgs::Imu                    Rot3D;
-typedef pcl::PointCloud<PointXYZITT>        CloudXYZITT;
-typedef pcl::PointCloud<PointXYZITT>::Ptr   CloudXYZITTPtr;
+typedef pcl::PointCloud<PointXYZITTH>       CloudXYZITTH;
+typedef pcl::PointCloud<PointXYZITTH>::Ptr  CloudXYZITTHPtr;
 typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PointStamped, sensor_msgs::Imu> MySyncPolicy;
 
 
@@ -75,7 +78,7 @@ class LidarCorrectionNode
         tf::TransformListener                                       _tf_listener;
         tf2_ros::TransformBroadcaster                               _dynamic_broadcaster;
 
-        std::deque<std::pair<ros::Time, CloudXYZITT>>                _cloud_buf;
+        std::deque<std::pair<ros::Time, CloudXYZITTH>>              _cloud_buf;
         std::mutex                                                  _cloud_buf_mtx;
 
         void _init_node();
