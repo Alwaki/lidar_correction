@@ -14,9 +14,9 @@ const double axis = 1.0 / 298.257222101;
 
 // Sweref 99 18 00
 const double false_northing = 0.0;
-const double false_easting = 500000.0;
+const double false_easting = 150000.0;
 const double central_meridian = 18.00;
-const double scale = 0.9996;
+const double scale = 1.0;
 
 const double e2 = flattening*(2.0 - flattening);
 const double n = flattening / (2.0 - flattening);

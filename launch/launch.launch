@@ -1,10 +1,10 @@
 <launch>
 
       <!-- treeview Dataset -->
-      <arg  name="bag_file"  default="/home/alex/Downloads/flight3_triple_return_18-19m_1ms_fullareapoles_withRTK.bag"/> <arg name="start_time" default="0"/>
+      <arg  name="bag_file"  default="/home/alex/Downloads/test_flight_campus.bag"/> <arg name="start_time" default="0"/>
 
       <!-- Setup static transform between lidar and drone -->      
-      <node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_lidar2drone" args="-0.2 -0.3 0 0.7071 0 -0.7071 0 base_link livox_frame" />
+      <node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_lidar2drone" args="1.5 0 0 0.7071 0 -0.7071 0 base_link livox_frame" />
       <node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_imu2drone" args="0.0 0 0.0 0.0 0 0 1 base_link body_FLU" />
 
       <!-- Run the lidar correction node -->
